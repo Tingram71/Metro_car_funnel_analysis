@@ -2,32 +2,37 @@
 ## Funnel analysis for UX for rideshare ap to identify where user churn arises and highlight areas of improvement in the UX. 
 
 #### How many times was the app downloaded?
+```sql
 SELECT count(*) AS total_downloads
 FROM app_downloads;
 
 | total_downloads |
 | --------------- |
 | 23608           |
+```
 
 
 
 #### How many users signed up on the app?
+```sql
 SELECT COUNT(user_id) AS total_signups
 FROM signups;
 
 | total_signups |
 | ------------- |
 | 17623         |
-
+````
 #### How many rides were requested through the app?
+```SQL
 SELECT COUNT(request_ts) AS total_ride_requests
 FROM ride_requests;
 
 | total_ride_requests |
 | ------------------- |
 | 385477              |
-
+````
 #### How many rides were requested and completed through the app?
+````sql
 SELECT
   COUNT(request_ts) AS total_ride_requests,
   COUNT(dropoff_ts) AS total_completed_rides
@@ -37,8 +42,9 @@ FROM
 | total_ride_requests | total_completed_rides |
 | ------------------- | --------------------- |
 | 385477              | 223652                |
-
+`````
 #### How many rides were requested and how many unique users requested a ride?
+```sql
 SELECT
   COUNT(request_ts) AS total_rides_requested,
   COUNT(DISTINCT user_id) AS total_unique_users
@@ -48,8 +54,9 @@ FROM
 | total_rides_requested | total_unique_users |
 | --------------------- | ------------------ |
 | 385477                | 12406              |
-
+````
 #### What is the average time of a ride from pick up to drop off?
+```sql
 SELECT
   AVG(dropoff_ts - pickup_ts) AS avg_ride_duration
 FROM
@@ -58,8 +65,9 @@ FROM
 | avg_ride_duration |
 | ----------------- |
 | 00:52:36.738773   |
-
+````
 #### How many rides were accepted by a driver?
+````sql
 SELECT
   COUNT(accept_ts) AS total_rides_driver_accepted
 FROM
@@ -68,8 +76,9 @@ FROM
 | total_rides_driver_accepted |
 | --------------------------- |
 | 248379                      |
-
+````
 #### How many rides did we successfully collect payments and how much was collected?
+````sql
 SELECT
   COUNT(transaction_id) AS total_transactions,
   SUM(purchase_amount_usd) AS total_revenue
@@ -81,8 +90,9 @@ WHERE
 | transaction_count | total_revenue     |
 | ----------------- | ----------------- |
 | 212628            | 4251667.609999995 |
-
+````
 #### How many ride requests happened on each platform?
+````sql
 SELECT
   platform,
   COUNT(r.request_ts) AS total_ride_requests
@@ -100,8 +110,9 @@ ORDER BY
 | ios      | 234693              |
 | android  | 112317              |
 | web      | 38467               |
-
+````
 #### What is the drop-off from users signing up to users requesting a ride?
+```sql
 SELECT
   COUNT(distinct s.user_id) AS total_signups,
   COUNT(distinct r.user_id) AS total_ride_requests,
@@ -116,5 +127,5 @@ FROM
 | total_signups | total_ride_requests | total_droppoffs | dropoff_rate           |
 | ------------- | ------------------- | --------------- | ---------------------- |
 | 17623         | 12406               | 5217            | 0.29603359246439312262 |
-
+````
 29.6%
