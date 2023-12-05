@@ -63,11 +63,15 @@ GROUP BY platform;
 ios 234693, web 38467, android 112317
 
 #### What is the drop-off from users signing up to users requesting a ride?
-SELECT COUNT(distinct ride_id) - COUNT(distinct user_id)
-FROM signups s
-LEFT JOIN ride_requests r
-ON s.user_id = r.ride_id;
-
- 17623 - 12406/17623
+SELECT
+  COUNT(distinct s.user_id) AS signups,
+  COUNT(distinct r.user_id) AS ride_requests,
+  COUNT(distinct s.user_id) - COUNT(distinct r.user_id) AS droppoff_count,
+  1 - (
+    COUNT(distinct r.user_id) / COUNT(distinct s.user_id)::numeric
+  ) AS dropoff_rate
+FROM
+  signups s
+  LEFT JOIN ride_requests r USING (user_id);
 
 29.6%
