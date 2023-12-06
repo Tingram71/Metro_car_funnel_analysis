@@ -374,3 +374,96 @@ ORDER BY
 | 2           | ride_requested | 12406 | 0.7039664075356069 |
 | 3           | ride_completed | 6233  | 0.353685524598536  |
 ````
+#### Funnel Percent of Top:
+````sql
+WITH
+  totals AS (
+    SELECT
+      COUNT(DISTINCT a.app_download_key) AS total_app_downloads,
+      COUNT(DISTINCT s.user_id) AS total_users_signed_up,
+      COUNT(DISTINCT r.user_id) AS total_users_ride_requested,
+      COUNT(
+        DISTINCT CASE
+          WHEN r.accept_ts IS NOT NULL THEN r.user_id
+        END
+      ) AS total_users_ride_accepted,
+      COUNT(
+        DISTINCT CASE
+          WHEN r.dropoff_ts IS NOT NULL THEN r.user_id
+        END
+      ) AS total_users_ride_completed,
+,
+      COUNT(
+        DISTINCT CASE
+          WHEN t.charge_status = 'Approved' THEN r.user_id
+        END
+      ) AS total_users_transaction_completed,
+      COUNT(DISTINCT rev.user_id) AS total_users_review_completed
+    FROM
+      app_downloads a
+      LEFT JOIN signups s ON a.app_download_key = s.session_id
+      LEFT JOIN ride_requests r ON s.user_id = r.user_id
+      LEFT JOIN transactions t ON r.ride_id = t.ride_id
+      LEFT JOIN reviews rev ON r.user_id = rev.user_id
+  ),
+  funnel_stages AS (
+    SELECT
+      0 AS funnel_step,
+      'downloads' AS funnel_name,
+      total_app_downloads AS value
+    FROM
+      totals
+    UNION
+    SELECT
+      1 AS funnel_step,
+      'signups' AS funnel_name,
+      total_users_signed_up AS value
+    FROM
+      totals
+    UNION
+    SELECT
+      2 AS funnel_step,
+      'ride_requested' AS funnel_name,
+      total_users_ride_requested AS value
+    FROM
+      totals
+    UNION
+    SELECT
+      3 AS funnel_step,
+      'ride_accepted' AS funnel_name,
+      total_users_ride_accepted AS value
+    FROM
+      totals
+    UNION
+    SELECT
+      4 AS funnel_step,
+      'ride_completed' AS funnel_name,
+      total_users_ride_completed AS value
+    FROM
+      totals
+    UNION
+    SELECT
+      5 AS funnel_step,
+      'payment_completed' AS funnel_name,
+      total_users_transaction_completed AS value
+    FROM
+      totals
+    UNION
+    SELECT
+      6 AS funnel_step,
+      'review_completed' AS funnel_name,
+      total_users_review_completed AS value
+    FROM
+      totals
+  )
+SELECT
+  *,
+  value::float / FIRST_VALUE(value) OVER (
+    ORDER BY
+      funnel_step
+  ) AS top_value
+FROM
+  funnel_stages
+ORDER BY
+  funnel_step;
+´´´´
