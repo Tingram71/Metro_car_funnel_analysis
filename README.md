@@ -129,3 +129,247 @@ FROM
 | 17623         | 12406               | 5217            | 0.29603359246439312262 |
 ````
 29.6%
+#### Of the users that signed up on the app, what percentage these users completed a ride?
+````sql
+SELECT
+  COUNT(DISTINCT s.user_id) AS total_signups,
+  COUNT(DISTINCT r.user_id) AS total_rides_completed,
+  COUNT(DISTINCT r.user_id) / COUNT(DISTINCT s.user_id)::FLOAT * 100 AS percentage_completed
+FROM
+  signups s
+  LEFT JOIN ride_requests r ON s.user_id = r.user_id
+  AND r.dropoff_ts IS NOT NULL;
+| total_signups | total_rides_completed | percentage_completed |
+| ------------- | --------------------- | -------------------- |
+| 17623         | 6233                  | 35.3685524598536     |
+````
+####  Using the percent of top approach, what are the user-level conversion rates for the first 3 stages of the funnel (app download to signup and signup to ride requested)?
+````sql
+WITH
+  
+  totals AS (
+    SELECT
+      COUNT(DISTINCT a.app_download_key) AS total_app_downloads,
+      COUNT(DISTINCT s.user_id) AS total_users_signed_up,
+      COUNT(DISTINCT r.user_id) AS total_users_ride_requested
+    FROM
+      app_downloads a
+      LEFT JOIN signups s ON a.app_download_key = s.session_id
+      LEFT JOIN ride_requests r ON s.user_id = r.user_id
+  ),
+  funnel_stages AS (
+    SELECT
+      0 AS funnel_step,
+      'downloads' AS funnel_name,
+      total_app_downloads AS value
+    FROM
+      totals
+    UNION
+    SELECT
+      1 AS funnel_step,
+      'signups' AS funnel_name,
+      total_users_signed_up AS value
+    FROM
+      totals
+    UNION
+    SELECT
+      2 AS funnel_step,
+      'ride_requested' AS funnel_name,
+      total_users_ride_requested AS value
+    FROM
+      totals
+  )
+SELECT
+  *,
+  value::float / FIRST_VALUE(value) OVER (
+    ORDER BY
+      funnel_step
+  ) AS previous_value
+FROM
+  funnel_stages
+ORDER BY
+  funnel_step;
+
+| funnel_step | funnel_name    | value | previous_value     |
+| ----------- | -------------- | ----- | ------------------ |
+| 0           | downloads      | 23608 | 1                  |
+| 1           | signups        | 17623 | 0.7464842426296171 |
+| 2           | ride_requested | 12406 | 0.5254998305659099 |
+````
+####  Using the percent of previous approach, what are the user-level conversion rates for the first 3 stages of the funnel (app download to signup and signup to ride requested)?
+````sql
+WITH
+  
+  totals AS (
+    SELECT
+      COUNT(DISTINCT a.app_download_key) AS total_app_downloads,
+      COUNT(DISTINCT s.user_id) AS total_users_signed_up,
+      COUNT(DISTINCT r.user_id) AS total_users_ride_requested
+    FROM
+      app_downloads a
+      LEFT JOIN signups s ON a.app_download_key = s.session_id
+      LEFT JOIN ride_requests r ON s.user_id = r.user_id
+  ),
+  funnel_stages AS (
+    SELECT
+      0 AS funnel_step,
+      'downloads' AS funnel_name,
+      total_app_downloads AS value
+    FROM
+      totals
+    UNION
+    SELECT
+      1 AS funnel_step,
+      'signups' AS funnel_name,
+      total_users_signed_up AS value
+    FROM
+      totals
+    UNION
+    SELECT
+      2 AS funnel_step,
+      'ride_requested' AS funnel_name,
+      total_users_ride_requested AS value
+    FROM
+      totals
+  )
+SELECT
+  *,
+  value::float / LAG(value) OVER (
+    ORDER BY
+      funnel_step
+  ) AS previous_value
+FROM
+  funnel_stages
+ORDER BY
+  funnel_step;
+| funnel_step | funnel_name    | value | previous_value     |
+| ----------- | -------------- | ----- | ------------------ |
+| 0           | downloads      | 23608 |                    |
+| 1           | signups        | 17623 | 0.7464842426296171 |
+| 2           | ride_requested | 12406 | 0.7039664075356069 |
+````
+#### Using the percent of previous approach, what are the user-level conversion rates for the following 3 stages of the funnel? 1. signup, 2. ride requested, 3. ride completed
+````sql
+WITH
+  totals AS (
+    SELECT
+      COUNT(DISTINCT a.app_download_key) AS total_app_downloads,
+      COUNT(DISTINCT s.user_id) AS total_users_signed_up,
+      COUNT(DISTINCT r.user_id) AS total_users_ride_requested,
+      COUNT(
+        DISTINCT CASE
+          WHEN r.dropoff_ts IS NOT NULL THEN r.user_id
+        END
+      ) AS total_users_ride_completed
+    FROM
+      app_downloads a
+      LEFT JOIN signups s ON a.app_download_key = s.session_id
+      LEFT JOIN ride_requests r ON s.user_id = r.user_id
+  ),
+  funnel_stages AS (
+    SELECT
+      0 AS funnel_step,
+      'downloads' AS funnel_name,
+      total_app_downloads AS value
+    FROM
+      totals
+    UNION
+    SELECT
+      1 AS funnel_step,
+      'signups' AS funnel_name,
+      total_users_signed_up AS value
+    FROM
+      totals
+    UNION
+    SELECT
+      2 AS funnel_step,
+      'ride_requested' AS funnel_name,
+      total_users_ride_requested AS value
+    FROM
+      totals
+    UNION
+    SELECT
+      3 AS funnel_step,
+      'ride_completed' AS funnel_name,
+      total_users_ride_completed AS value
+    FROM
+      totals
+      --WHERE dropoff_ts IS NOT NULL
+  )
+SELECT
+  *,
+  value::float / LAG(value) OVER (
+    ORDER BY
+      funnel_step
+  ) AS previous_value
+FROM
+  funnel_stages
+ORDER BY
+  funnel_step;
+| funnel_step | funnel_name    | value | previous_value     |
+| ----------- | -------------- | ----- | ------------------ |
+| 0           | downloads      | 23608 |                    |
+| 1           | signups        | 17623 | 0.7464842426296171 |
+| 2           | ride_requested | 12406 | 0.7039664075356069 |
+| 3           | ride_completed | 6233  | 0.5024181847493149 |
+
+````
+ #### Using the percent of top approach, what are the  user-level conversion rates for the following 3 stages of the funnel? 1. signup, 2. ride requested, 3. ride completed (hint: signup is the top of this funnel)
+````sql
+WITH
+  totals AS (
+    SELECT
+      COUNT(DISTINCT a.app_download_key) AS total_app_downloads,
+      COUNT(DISTINCT s.user_id) AS total_users_signed_up,
+      COUNT(DISTINCT r.user_id) AS total_users_ride_requested,
+      COUNT(
+        DISTINCT CASE
+          WHEN r.dropoff_ts IS NOT NULL THEN r.user_id
+        END
+      ) AS total_users_ride_completed
+    FROM
+      app_downloads a
+      LEFT JOIN signups s ON a.app_download_key = s.session_id
+      LEFT JOIN ride_requests r ON s.user_id = r.user_id
+  ),
+  funnel_stages AS (
+   
+    SELECT
+      1 AS funnel_step,
+      'signups' AS funnel_name,
+      total_users_signed_up AS value
+    FROM
+      totals
+    UNION
+    SELECT
+      2 AS funnel_step,
+      'ride_requested' AS funnel_name,
+      total_users_ride_requested AS value
+    FROM
+      totals
+    UNION
+    SELECT
+      3 AS funnel_step,
+      'ride_completed' AS funnel_name,
+      total_users_ride_completed AS value
+    FROM
+      totals
+      
+  )
+SELECT
+  *,
+  value::float / FIRST_VALUE(value) OVER (
+    ORDER BY
+      funnel_step
+  ) AS previous_value
+FROM
+  funnel_stages
+ORDER BY
+  funnel_step;
+
+| funnel_step | funnel_name    | value | previous_value     |
+| ----------- | -------------- | ----- | ------------------ |
+| 1           | signups        | 17623 | 1                  |
+| 2           | ride_requested | 12406 | 0.7039664075356069 |
+| 3           | ride_completed | 6233  | 0.353685524598536  |
+````
