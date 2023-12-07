@@ -5,11 +5,11 @@
 ```sql
 SELECT count(*) AS total_downloads
 FROM app_downloads;
-
+````
 | total_downloads |
 | --------------- |
 | 23608           |
-```
+
 
 
 
@@ -17,20 +17,20 @@ FROM app_downloads;
 ```sql
 SELECT COUNT(user_id) AS total_signups
 FROM signups;
-
+````
 | total_signups |
 | ------------- |
 | 17623         |
-````
+
 #### How many rides were requested through the app?
 ```SQL
 SELECT COUNT(request_ts) AS total_ride_requests
 FROM ride_requests;
-
+````
 | total_ride_requests |
 | ------------------- |
 | 385477              |
-````
+
 #### How many rides were requested and completed through the app?
 ````sql
 SELECT
@@ -38,11 +38,11 @@ SELECT
   COUNT(dropoff_ts) AS total_completed_rides
 FROM
   ride_requests;
-
+`````
 | total_ride_requests | total_completed_rides |
 | ------------------- | --------------------- |
 | 385477              | 223652                |
-`````
+
 #### How many rides were requested and how many unique users requested a ride?
 ```sql
 SELECT
@@ -50,33 +50,33 @@ SELECT
   COUNT(DISTINCT user_id) AS total_unique_users
 FROM
   ride_requests;
-
+````
 | total_rides_requested | total_unique_users |
 | --------------------- | ------------------ |
 | 385477                | 12406              |
-````
+
 #### What is the average time of a ride from pick up to drop off?
 ```sql
 SELECT
   AVG(dropoff_ts - pickup_ts) AS avg_ride_duration
 FROM
   ride_requests;
-
+````
 | avg_ride_duration |
 | ----------------- |
 | 00:52:36.738773   |
-````
+
 #### How many rides were accepted by a driver?
 ````sql
 SELECT
   COUNT(accept_ts) AS total_rides_driver_accepted
 FROM
   ride_requests;
-
+````
 | total_rides_driver_accepted |
 | --------------------------- |
 | 248379                      |
-````
+
 #### How many rides did we successfully collect payments and how much was collected?
 ````sql
 SELECT
@@ -86,11 +86,11 @@ FROM
   transactions
 WHERE
   charge_status = 'Approved';
-
+````
 | transaction_count | total_revenue     |
 | ----------------- | ----------------- |
 | 212628            | 4251667.609999995 |
-````
+
 #### How many ride requests happened on each platform?
 ````sql
 SELECT
@@ -104,13 +104,13 @@ GROUP BY
   platform
 ORDER BY
   total_ride_requests DESC;
-
+````
 | platform | total_ride_requests |
 | -------- | ------------------- |
 | ios      | 234693              |
 | android  | 112317              |
 | web      | 38467               |
-````
+
 #### What is the drop-off from users signing up to users requesting a ride?
 ```sql
 SELECT
@@ -123,11 +123,11 @@ SELECT
 FROM
   signups s
   LEFT JOIN ride_requests r USING (user_id);
-
+````
 | total_signups | total_ride_requests | total_droppoffs | dropoff_rate           |
 | ------------- | ------------------- | --------------- | ---------------------- |
 | 17623         | 12406               | 5217            | 0.29603359246439312262 |
-````
+
 29.6%
 #### Of the users that signed up on the app, what percentage these users completed a ride?
 ````sql
@@ -139,10 +139,11 @@ FROM
   signups s
   LEFT JOIN ride_requests r ON s.user_id = r.user_id
   AND r.dropoff_ts IS NOT NULL;
+````
 | total_signups | total_rides_completed | percentage_completed |
 | ------------- | --------------------- | -------------------- |
 | 17623         | 6233                  | 35.3685524598536     |
-````
+
 
 ####  Using the percent of previous approach, what are the user-level conversion rates for the first 3 stages of the funnel (app download to signup and signup to ride requested)?
 ````sql
@@ -190,12 +191,13 @@ FROM
   funnel_stages
 ORDER BY
   funnel_step;
+````
 | funnel_step | funnel_name    | value | previous_value     |
 | ----------- | -------------- | ----- | ------------------ |
 | 0           | downloads      | 23608 |                    |
 | 1           | signups        | 17623 | 0.7464842426296171 |
 | 2           | ride_requested | 12406 | 0.7039664075356069 |
-````
+
 ####  Using the percent of top approach, what are the user-level conversion rates for the first 3 stages of the funnel (app download to signup and signup to ride requested)?
 ````sql
 WITH
@@ -242,13 +244,13 @@ FROM
   funnel_stages
 ORDER BY
   funnel_step;
-
+````
 | funnel_step | funnel_name    | value | top_value          |
 | ----------- | -------------- | ----- | ------------------ |
 | 0           | downloads      | 23608 | 1                  |
 | 1           | signups        | 17623 | 0.7464842426296171 |
 | 2           | ride_requested | 12406 | 0.5254998305659099 |
-````
+
 #### Using the percent of previous approach, what are the user-level conversion rates for the following 3 stages of the funnel? 1. signup, 2. ride requested, 3. ride completed
 ````sql
 WITH
@@ -307,6 +309,7 @@ FROM
   funnel_stages
 ORDER BY
   funnel_step;
+````
 | funnel_step | funnel_name    | value | previous_value     |
 | ----------- | -------------- | ----- | ------------------ |
 | 0           | downloads      | 23608 |                    |
@@ -314,7 +317,7 @@ ORDER BY
 | 2           | ride_requested | 12406 | 0.7039664075356069 |
 | 3           | ride_completed | 6233  | 0.5024181847493149 |
 
-````
+
  #### Using the percent of top approach, what are the  user-level conversion rates for the following 3 stages of the funnel? 1. signup, 2. ride requested, 3. ride completed (hint: signup is the top of this funnel)
 ````sql
 WITH
@@ -367,13 +370,13 @@ FROM
   funnel_stages
 ORDER BY
   funnel_step;
-
-| funnel_step | funnel_name    | value | top_value     |
+````
+| funnel_step | funnel_name    | value | top_value          |
 | ----------- | -------------- | ----- | ------------------ |
 | 1           | signups        | 17623 | 1                  |
 | 2           | ride_requested | 12406 | 0.7039664075356069 |
 | 3           | ride_completed | 6233  | 0.353685524598536  |
-````
+
 #### Funnel Percent of Top:
 ````sql
 WITH
@@ -466,4 +469,13 @@ FROM
   funnel_stages
 ORDER BY
   funnel_step;
-´´´´
+````
+| funnel_step | funnel_name       | value | top_value           | previous_value     |
+| ----------- | ----------------- | ----- | ------------------- | ------------------ |
+| 0           | downloads         | 23608 | 1                   |                    |
+| 1           | signups           | 17623 | 0.7464842426296171  | 0.7464842426296171 |
+| 2           | ride_requested    | 12406 | 0.5254998305659099  | 0.7039664075356069 |
+| 3           | ride_accepted     | 12278 | 0.5200779396814639  | 0.9896824117362566 |
+| 4           | ride_completed    | 6233  | 0.26402067095899695 | 0.5076559700276918 |
+| 5           | payment_completed | 6233  | 0.26402067095899695 | 1                  |
+| 6           | review_completed  | 4348  | 0.18417485598102337 | 0.6975774105567143 |
