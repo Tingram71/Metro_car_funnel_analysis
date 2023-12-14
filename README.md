@@ -395,7 +395,7 @@ WITH
           WHEN r.dropoff_ts IS NOT NULL THEN r.user_id
         END
       ) AS total_users_ride_completed,
-,
+
       COUNT(
         DISTINCT CASE
           WHEN t.charge_status = 'Approved' THEN r.user_id
@@ -461,6 +461,10 @@ WITH
   )
 SELECT
   *,
+  value::float / LAG(value) OVER (
+    ORDER BY
+      funnel_step
+  ) AS previous_value, 
   value::float / FIRST_VALUE(value) OVER (
     ORDER BY
       funnel_step
