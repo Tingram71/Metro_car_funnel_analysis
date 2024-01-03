@@ -1,7 +1,7 @@
 # Metro_car_funnel_analysis
 ## Funnel analysis for UX for rideshare ap to identify where user churn arises and highlight areas of improvement in the UX. 
 
-#### How many times was the app downloaded?
+#### Total app downloadeds:
 ```sql
 SELECT count(*) AS total_downloads
 FROM app_downloads;
@@ -13,7 +13,7 @@ FROM app_downloads;
 
 
 
-#### How many users signed up on the app?
+#### Total users signed up on the app:
 ```sql
 SELECT COUNT(user_id) AS total_signups
 FROM signups;
@@ -22,7 +22,7 @@ FROM signups;
 | ------------- |
 | 17623         |
 
-#### How many rides were requested through the app?
+#### Total rides requested through the app:
 ```SQL
 SELECT COUNT(request_ts) AS total_ride_requests
 FROM ride_requests;
@@ -31,7 +31,7 @@ FROM ride_requests;
 | ------------------- |
 | 385477              |
 
-#### How many rides were requested and completed through the app?
+#### Total rides requested and completed through the app:
 ````sql
 SELECT
   COUNT(request_ts) AS total_ride_requests,
@@ -43,7 +43,7 @@ FROM
 | ------------------- | --------------------- |
 | 385477              | 223652                |
 
-#### How many rides were requested and how many unique users requested a ride?
+#### Total rides requested and count of unique users requesting a ride:
 ```sql
 SELECT
   COUNT(request_ts) AS total_rides_requested,
@@ -55,7 +55,7 @@ FROM
 | --------------------- | ------------------ |
 | 385477                | 12406              |
 
-#### What is the average time of a ride from pick up to drop off?
+#### Average duration of a ride from pick up to drop off:
 ```sql
 SELECT
   AVG(dropoff_ts - pickup_ts) AS avg_ride_duration
@@ -66,7 +66,7 @@ FROM
 | ----------------- |
 | 00:52:36.738773   |
 
-#### How many rides were accepted by a driver?
+#### Count of rides accepted by a driver:
 ````sql
 SELECT
   COUNT(accept_ts) AS total_rides_driver_accepted
@@ -77,7 +77,7 @@ FROM
 | --------------------------- |
 | 248379                      |
 
-#### How many rides did we successfully collect payments and how much was collected?
+#### Total rides that successfully collected payments and total collected
 ````sql
 SELECT
   COUNT(transaction_id) AS total_transactions,
@@ -91,7 +91,7 @@ WHERE
 | ----------------- | ----------------- |
 | 212628            | 4251667.609999995 |
 
-#### How many ride requests happened on each platform?
+#### Total rides requested on each platform:
 ````sql
 SELECT
   platform,
@@ -483,3 +483,722 @@ ORDER BY
 | 4           | ride_completed    | 6233  | 0.26402067095899695 | 0.5076559700276918 |
 | 5           | payment_completed | 6233  | 0.26402067095899695 | 1                  |
 | 6           | review_completed  | 4348  | 0.18417485598102337 | 0.6975774105567143 |
+
+#### To pull aggregated data for each funnel step by platform, user age range and download date of app:
+
+````sql
+WITH
+  user_details AS (
+    SELECT
+      app_download_key,
+      user_id,
+      platform,
+      age_range,
+      date(download_ts) AS download_dt
+    FROM
+      app_downloads a
+      LEFT JOIN signups s ON a.app_download_key = s.session_id
+  ),
+  downloads AS (
+    SELECT
+      0 AS step,
+      'download' AS name,
+      platform,
+      age_range,
+      download_dt,
+      COUNT(DISTINCT app_download_key) AS users_count,
+      0 AS count_rides
+    FROM
+      user_details
+    GROUP BY
+      platform,
+      age_range,
+      download_dt
+  ),
+  signup AS (
+    SELECT
+      1 AS step,
+      'signup' AS name,
+      user_details.platform,
+      user_details.age_range,
+      user_details.download_dt,
+      COUNT(DISTINCT user_id) AS users_count,
+      0 AS count_rides
+    FROM
+      signups
+      JOIN user_details USING (user_id)
+    WHERE
+      signup_ts IS NOT NULL
+    GROUP BY
+      3,
+      4,
+      5
+  ),
+  requested AS (
+    SELECT
+      2 AS step,
+      'ride_requested' AS name,
+      user_details.platform,
+      user_details.age_range,
+      user_details.download_dt,
+      COUNT(DISTINCT user_id) AS users_count,
+      COUNT(DISTINCT ride_id) AS count_rides
+    FROM
+      ride_requests
+      JOIN user_details USING (user_id)
+    where
+      request_ts IS NOT NULL
+    GROUP BY
+      user_details.platform,
+      user_details.age_range,
+      user_details.download_dt
+  ),
+  ride_accepted AS (
+    SELECT
+      3 AS step,
+      'driver_accepted' AS name,
+      user_details.platform,
+      user_details.age_range,
+      user_details.download_dt,
+      COUNT(DISTINCT user_id) AS users_count,
+      COUNT(DISTINCT ride_id) AS count_rides
+    FROM
+      ride_requests
+      JOIN user_details USING (user_id)
+    WHERE
+      accept_ts IS NOT NULL
+    GROUP BY
+      user_details.platform,
+      user_details.age_range,
+      user_details.download_dt
+  ),
+  ride_completed AS (
+    SELECT
+      4 AS step,
+      'ride_completed' AS name,
+      user_details.platform,
+      user_details.age_range,
+      user_details.download_dt,
+      COUNT(DISTINCT user_id) AS users_count,
+      COUNT(DISTINCT ride_id) AS count_rides
+    FROM
+      ride_requests
+      JOIN user_details USING (user_id)
+    WHERE
+      dropoff_ts IS NOT NULL
+    GROUP BY
+      user_details.platform,
+      user_details.age_range,
+      user_details.download_dt
+  ),
+  payment AS (
+    SELECT
+      5 AS step,
+      'payment_completed' AS name,
+      user_details.platform,
+      user_details.age_range,
+      user_details.download_dt,
+      COUNT(DISTINCT user_id) AS users_count,
+      COUNT(DISTINCT t.ride_id) AS count_rides
+    FROM
+      transactions t
+      LEFT JOIN ride_requests r ON t.ride_id = r.ride_id
+      JOIN user_details using (user_id)
+    WHERE
+      charge_status = 'Approved'
+    GROUP BY
+      user_details.platform,
+      user_details.age_range,
+      user_details.download_dt
+  ),
+  review AS (
+    SELECT
+      6 AS step,
+      'review' AS NAME,
+      user_details.platform,
+      user_details.age_range,
+      user_details.download_dt,
+      COUNT(DISTINCT user_id) AS users_count,
+      COUNT(DISTINCT ride_id) AS count_rides
+    FROM
+      reviews
+      JOIN user_details USING (user_id)
+    GROUP BY
+      user_details.platform,
+      user_details.age_range,
+      user_details.download_dt
+  )
+SELECT
+  *
+FROM
+  downloads
+UNION
+SELECT
+  *
+FROM
+  signup
+UNION
+SELECT
+  *
+FROM
+  requested
+UNION
+SELECT
+  *
+FROM
+  ride_accepted
+UNION
+SELECT
+  *
+FROM
+  ride_completed
+UNION
+SELECT
+  *
+FROM
+  payment
+UNION
+SELECT
+  *
+FROM
+  review
+ORDER BY
+  step;
+````
+#### Calculations for total users, percent of previous step and percent of total users grouped by platform.
+
+````sql
+WITH
+  totals AS (
+    SELECT
+      COUNT(DISTINCT a.app_download_key) AS total_app_downloads,
+      COUNT(DISTINCT s.user_id) AS total_users_signed_up,
+      COUNT(DISTINCT r.user_id) AS total_users_ride_requested,
+      COUNT(
+        DISTINCT CASE
+          WHEN r.accept_ts IS NOT NULL THEN r.user_id
+        END
+      ) AS total_users_ride_accepted,
+      COUNT(
+        DISTINCT CASE
+          WHEN r.dropoff_ts IS NOT NULL THEN r.user_id
+        END
+      ) AS total_users_ride_completed,
+
+      COUNT(
+        DISTINCT CASE
+          WHEN t.charge_status = 'Approved' THEN r.user_id
+        END
+      ) AS total_users_transaction_completed,
+      COUNT(DISTINCT rev.user_id) AS total_users_review_completed, platform
+    FROM
+      app_downloads a
+      LEFT JOIN signups s ON a.app_download_key = s.session_id
+      LEFT JOIN ride_requests r ON s.user_id = r.user_id
+      LEFT JOIN transactions t ON r.ride_id = t.ride_id
+      LEFT JOIN reviews rev ON r.user_id = rev.user_id
+    GROUP BY platform
+  ),
+  funnel_stages AS (
+    SELECT
+      0 AS funnel_step,
+      'downloads' AS funnel_name, platform,
+      total_app_downloads AS value
+    FROM
+      totals
+    UNION
+    SELECT
+      1 AS funnel_step,
+      'signups' AS funnel_name, platform,
+      total_users_signed_up AS value 
+    FROM
+      totals
+    UNION
+    SELECT
+      2 AS funnel_step,
+      'ride_requested' AS funnel_name, platform,
+      total_users_ride_requested AS value
+    FROM
+      totals
+    UNION
+    SELECT
+      3 AS funnel_step, platform,
+      'ride_accepted' AS funnel_name,
+      total_users_ride_accepted AS value
+    FROM
+      totals
+    UNION
+    SELECT
+      4 AS funnel_step,
+      'ride_completed' AS funnel_name, platform,
+      total_users_ride_completed AS value
+    FROM
+      totals
+    UNION
+    SELECT
+      5 AS funnel_step,
+      'payment_completed' AS funnel_name, platform,
+      total_users_transaction_completed AS value
+    FROM
+      totals
+    UNION
+    SELECT
+      6 AS funnel_step,
+      'review_completed' AS funnel_name, platform,
+      total_users_review_completed AS value
+    FROM
+      totals
+  )
+SELECT
+  *,
+  value::float / LAG(value) OVER (
+    ORDER BY
+      funnel_step
+  ) AS previous_value, 
+  value::float / FIRST_VALUE(value) OVER (
+    ORDER BY
+      funnel_step
+  ) AS top_value
+FROM
+  funnel_stages
+ORDER BY
+  funnel_step;
+````
+Count of users and rides for 'ride request' step of the funnel grouped by hour of request, onth and day:
+
+````sql
+WITH
+  user_details AS (
+    SELECT
+      app_download_key,
+      user_id, EXTRACT(day from request_ts) AS request_day,
+      EXTRACT(
+        hour
+        from
+          request_ts
+      ) AS request_hours,
+      EXTRACT(
+        month
+        from
+          request_ts
+      ) AS request_month
+    FROM
+      app_downloads a
+      LEFT JOIN signups s ON a.app_download_key = s.session_id
+      LEFT JOIN ride_requests r USING (user_id)
+  ),
+  requested AS (
+    SELECT
+      2 AS step,
+      'ride_requested' AS name,
+      user_details.request_hours,
+      user_details.request_month,
+    user_details.request_day,
+      COUNT(DISTINCT user_id) AS users_count,
+      COUNT(DISTINCT ride_id) AS count_rides
+    FROM
+      ride_requests
+      JOIN user_details USING (user_id)
+    where
+      request_ts IS NOT NULL
+    GROUP BY
+      user_details.request_hours,
+      user_details.request_month,
+    user_details.request_day
+  )
+SELECT
+  *
+FROM
+  requested
+ORDER BY
+  step;
+````
+Count of users and rides for each funnel step grouped by platform, age range and trip duration:
+
+````sql
+WITH
+  user_details AS (
+    SELECT
+      app_download_key,
+      s.user_id,
+      platform,
+      age_range,
+      dropoff_ts - pickup_ts AS trip_duration
+    FROM
+      app_downloads a
+      LEFT JOIN signups s ON a.app_download_key = s.session_id
+    LEFT JOIN ride_requests r ON s.user_id = r.user_id
+  ),
+  downloads AS (
+    SELECT
+      0 AS step,
+      'download' AS name,
+      platform,
+      age_range,
+      trip_duration,
+      COUNT(DISTINCT app_download_key) AS users_count,
+      0 AS count_rides
+    FROM
+      user_details
+    GROUP BY
+      platform,
+      age_range,
+      trip_duration
+  ),
+  signup AS (
+    SELECT
+      1 AS step,
+      'signup' AS name,
+      user_details.platform,
+      user_details.age_range,
+      user_details.trip_duration,
+      COUNT(DISTINCT user_id) AS users_count,
+      0 AS count_rides
+    FROM
+      signups
+      JOIN user_details USING (user_id)
+    WHERE
+      signup_ts IS NOT NULL
+    GROUP BY
+      3,
+      4,
+      5
+  ),
+  requested AS (
+    SELECT
+      2 AS step,
+      'ride_requested' AS name,
+      user_details.platform,
+      user_details.age_range,
+      user_details.trip_duration,
+      COUNT(DISTINCT user_id) AS users_count,
+      COUNT(DISTINCT ride_id) AS count_rides
+    FROM
+      ride_requests
+      JOIN user_details USING (user_id)
+    where
+      request_ts IS NOT NULL
+    GROUP BY
+      user_details.platform,
+      user_details.age_range,
+      user_details.trip_duration
+  ),
+  ride_accepted AS (
+    SELECT
+      3 AS step,
+      'driver_accepted' AS name,
+      user_details.platform,
+      user_details.age_range,
+      user_details.trip_duration,
+      COUNT(DISTINCT user_id) AS users_count,
+      COUNT(DISTINCT ride_id) AS count_rides
+    FROM
+      ride_requests
+      JOIN user_details USING (user_id)
+    WHERE
+      accept_ts IS NOT NULL
+    GROUP BY
+      user_details.platform,
+      user_details.age_range,
+      user_details.trip_duration
+  ),
+  ride_completed AS (
+    SELECT
+      4 AS step,
+      'ride_completed' AS name,
+      user_details.platform,
+      user_details.age_range,
+      user_details.trip_duration,
+      COUNT(DISTINCT user_id) AS users_count,
+      COUNT(DISTINCT ride_id) AS count_rides
+    FROM
+      ride_requests
+      JOIN user_details USING (user_id)
+    WHERE
+      dropoff_ts IS NOT NULL
+    GROUP BY
+      user_details.platform,
+      user_details.age_range,
+      user_details.trip_duration
+  ),
+  payment AS (
+    SELECT
+      5 AS step,
+      'payment_completed' AS name,
+      user_details.platform,
+      user_details.age_range,
+      user_details.trip_duration,
+      COUNT(DISTINCT user_id) AS users_count,
+      COUNT(DISTINCT t.ride_id) AS count_rides
+    FROM
+      transactions t
+      LEFT JOIN ride_requests r ON t.ride_id = r.ride_id
+      JOIN user_details using (user_id)
+    WHERE
+      charge_status = 'Approved'
+    GROUP BY
+      user_details.platform,
+      user_details.age_range,
+      user_details.trip_duration
+  ),
+  review AS (
+    SELECT
+      6 AS step,
+      'review' AS NAME,
+      user_details.platform,
+      user_details.age_range,
+      user_details.trip_duration,
+      COUNT(DISTINCT user_id) AS users_count,
+      COUNT(DISTINCT ride_id) AS count_rides
+    FROM
+      reviews
+      JOIN user_details USING (user_id)
+    GROUP BY
+      user_details.platform,
+      user_details.age_range,
+      user_details.trip_duration
+  )
+SELECT
+  *
+FROM
+  downloads
+UNION
+SELECT
+  *
+FROM
+  signup
+UNION
+SELECT
+  *
+FROM
+  requested
+UNION
+SELECT
+  *
+FROM
+  ride_accepted
+UNION
+SELECT
+  *
+FROM
+  ride_completed
+UNION
+SELECT
+  *
+FROM
+  payment
+UNION
+SELECT
+  *
+FROM
+  review
+ORDER BY
+  step;
+````
+User count and ride count for each funnel step grouped by platform, age range, download date and trip fare
+
+````sql
+WITH
+  user_details AS (
+    SELECT
+      app_download_key,
+      s.user_id,
+      platform,
+      age_range,
+      date(download_ts) AS download_dt,
+    AVG(purchase_amount_usd) AS trip_fare
+    FROM
+      app_downloads a
+      LEFT JOIN signups s ON a.app_download_key = s.session_id
+    LEFT JOIN ride_requests r ON s.user_id = r.user_id
+    LEFT JOIN transactions t ON r.ride_id = t.ride_id 
+    WHERE purchase_amount_usd IS NOT NULL
+    GROUP BY 1,2,3,4,5
+  ),
+  downloads AS (
+    SELECT
+      0 AS step,
+      'download' AS name,
+      platform,
+      age_range,
+      download_dt,trip_fare,
+      COUNT(DISTINCT app_download_key) AS users_count,
+      0 AS count_rides
+    FROM
+      user_details
+    GROUP BY
+      platform,
+      age_range,
+      download_dt,
+   trip_fare
+  ),
+  signup AS (
+    SELECT
+      1 AS step,
+      'signup' AS name,
+      user_details.platform,
+      user_details.age_range,
+      user_details.download_dt,
+   trip_fare,
+      COUNT(DISTINCT user_id) AS users_count,
+      0 AS count_rides
+    FROM
+      signups
+      JOIN user_details USING (user_id)
+    WHERE
+      signup_ts IS NOT NULL
+    GROUP BY
+      3,
+      4,
+      5,
+    trip_fare
+  ),
+  requested AS (
+    SELECT
+      2 AS step,
+      'ride_requested' AS name,
+      user_details.platform,
+      user_details.age_range,
+      user_details.download_dt,
+    trip_fare,
+      COUNT(DISTINCT user_id) AS users_count,
+      COUNT(DISTINCT ride_id) AS count_rides
+    FROM
+      ride_requests
+      JOIN user_details USING (user_id)
+    where
+      request_ts IS NOT NULL
+    GROUP BY
+      user_details.platform,
+      user_details.age_range,
+      user_details.download_dt,
+    trip_fare
+  ),
+  ride_accepted AS (
+    SELECT
+      3 AS step,
+      'driver_accepted' AS name,
+      user_details.platform,
+      user_details.age_range,
+      user_details.download_dt,
+      
+    trip_fare,
+    COUNT(DISTINCT user_id) AS users_count,
+      COUNT(DISTINCT ride_id) AS count_rides
+    FROM
+      ride_requests
+      JOIN user_details USING (user_id)
+    WHERE
+      accept_ts IS NOT NULL
+    GROUP BY
+      user_details.platform,
+      user_details.age_range,
+      user_details.download_dt,
+    trip_fare
+  ),
+  ride_completed AS (
+    SELECT
+      4 AS step,
+      'ride_completed' AS name,
+      user_details.platform,
+      user_details.age_range,
+      user_details.download_dt,
+   trip_fare,  
+    COUNT(DISTINCT user_id) AS users_count,
+      COUNT(DISTINCT ride_id) AS count_rides
+    FROM
+      ride_requests
+      JOIN user_details USING (user_id)
+    WHERE
+      dropoff_ts IS NOT NULL
+    GROUP BY
+      user_details.platform,
+      user_details.age_range,
+      user_details.download_dt,
+    trip_fare
+  ),
+  payment AS (
+    SELECT
+      5 AS step,
+      'payment_completed' AS name,
+      user_details.platform,
+      user_details.age_range,
+      user_details.download_dt,
+    trip_fare, 
+    COUNT(DISTINCT user_id) AS users_count,
+      COUNT(DISTINCT t.ride_id) AS count_rides
+    FROM
+      transactions t
+      LEFT JOIN ride_requests r ON t.ride_id = r.ride_id
+      JOIN user_details using (user_id)
+    WHERE
+      charge_status = 'Approved'
+    GROUP BY
+      user_details.platform,
+      user_details.age_range,
+      user_details.download_dt,
+    trip_fare
+  ),
+  review AS (
+    SELECT
+      6 AS step,
+      'review' AS NAME,
+      user_details.platform,
+      user_details.age_range,
+      user_details.download_dt,
+   trip_fare,  
+    COUNT(DISTINCT user_id) AS users_count,
+      COUNT(DISTINCT ride_id) AS count_rides
+    FROM
+      reviews
+      JOIN user_details USING (user_id)
+    GROUP BY
+      user_details.platform,
+      user_details.age_range,
+      user_details.download_dt,
+    trip_fare
+  )
+SELECT
+  *
+FROM
+  downloads
+UNION
+SELECT
+  *
+FROM
+  signup
+UNION
+SELECT
+  *
+FROM
+  requested
+UNION
+SELECT
+  *
+FROM
+  ride_accepted
+UNION
+SELECT
+  *
+FROM
+  ride_completed
+UNION
+SELECT
+  *
+FROM
+  payment
+UNION
+SELECT
+  *
+FROM
+  review
+ORDER BY
+  step;
+````
+
+
+
+
+
+
+
