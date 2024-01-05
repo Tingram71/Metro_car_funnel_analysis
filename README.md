@@ -1,5 +1,5 @@
-# Metro_car_funnel_analysis
-## Funnel analysis for UX for rideshare ap to identify where user churn arises and highlight areas of improvement in the UX. 
+# Metrocar Rideshare App Funnel Analysis
+## Funnel analysis for UX for rideshare app to identify where user churn arises and highlight areas of improvement in the UX. 
 
 #### Total app downloadeds:
 ```sql
