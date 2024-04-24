@@ -762,7 +762,7 @@ FROM
 ORDER BY
   funnel_step;
 ````
-####Count of users and rides for 'ride request' step of the funnel grouped by hour of request, month and day:
+#### Count of users and rides for 'ride request' step of the funnel grouped by hour of request, month and day:
 
 ````sql
 WITH
@@ -811,7 +811,7 @@ FROM
 ORDER BY
   step;
 ````
-####Count of users and rides for each funnel step grouped by platform, age range and trip duration:
+#### Count of users and rides for each funnel step grouped by platform, age range and trip duration:
 
 ````sql
 WITH
@@ -993,7 +993,7 @@ FROM
 ORDER BY
   step;
 ````
-####User count and ride count for each funnel step grouped by platform, age range, download date and trip fare
+#### User count and ride count for each funnel step grouped by platform, age range, download date and trip fare
 
 ````sql
 WITH
