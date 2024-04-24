@@ -10,9 +10,6 @@ FROM app_downloads;
 | --------------- |
 | 23608           |
 
-
-
-
 #### Total users signed up on the app:
 ```sql
 SELECT COUNT(user_id) AS total_signups
@@ -129,6 +126,7 @@ FROM
 | 17623         | 12406               | 5217            | 0.29603359246439312262 |
 
 29.6%
+
 #### Of the users that signed up on the app, what percentage these users completed a ride?
 ````sql
 SELECT
@@ -183,7 +181,7 @@ WITH
   )
 SELECT
   *,
-  value::float / LAG(value) OVER (
+  value::float / LAG(value) OVER ( 
     ORDER BY
       funnel_step
   ) AS previous_value
@@ -318,7 +316,7 @@ ORDER BY
 | 3           | ride_completed | 6233  | 0.5024181847493149 |
 
 
- #### Using the percent of top approach, what are the  user-level conversion rates for the following 3 stages of the funnel? 1. signup, 2. ride requested, 3. ride completed (hint: signup is the top of this funnel)
+ #### Using the percent of top approach, what are the  user-level conversion rates for the following 3 stages of the funnel? 1. signup, 2. ride requested, 3. ride completed 
 ````sql
 WITH
   totals AS (
@@ -377,7 +375,7 @@ ORDER BY
 | 2           | ride_requested | 12406 | 0.7039664075356069 |
 | 3           | ride_completed | 6233  | 0.353685524598536  |
 
-#### Funnel Percent of Top:
+#### Funnel Percent of Top: Calulates total users for each funnel step with percentage of users who completed that step from the initial total users who siged up on the app.
 ````sql
 WITH
   totals AS (
@@ -764,7 +762,7 @@ FROM
 ORDER BY
   funnel_step;
 ````
-Count of users and rides for 'ride request' step of the funnel grouped by hour of request, onth and day:
+####Count of users and rides for 'ride request' step of the funnel grouped by hour of request, month and day:
 
 ````sql
 WITH
@@ -813,7 +811,7 @@ FROM
 ORDER BY
   step;
 ````
-Count of users and rides for each funnel step grouped by platform, age range and trip duration:
+####Count of users and rides for each funnel step grouped by platform, age range and trip duration:
 
 ````sql
 WITH
@@ -995,7 +993,7 @@ FROM
 ORDER BY
   step;
 ````
-User count and ride count for each funnel step grouped by platform, age range, download date and trip fare
+####User count and ride count for each funnel step grouped by platform, age range, download date and trip fare
 
 ````sql
 WITH
