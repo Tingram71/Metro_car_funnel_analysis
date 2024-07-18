@@ -1,7 +1,16 @@
-# Metrocar Rideshare App Funnel Analysis
-## Funnel analysis for UX for rideshare app to identify where user churn arises and highlight areas of improvement in the UX. 
+# Metrocar Rideshare App Funnel Analysis Project
+## Overview:
+This repository houses the final assessment project for the Data Analysis Program at MasterSchool. The project focused on analyzing the customer funnel of Metrocar, a ride-sharing app comparable to Uber and Lyft, utilizing SQL for data querying and Tableau for data visualization.
+## Motivation:
+The project concentrated on performing an in-depth funnel analysis to pinpoint areas for enhancement in Metrocar's customer journey. Its goal was to answer specific business questions, offering insights for optimization and data-driven recommendations.
+## Project:
+The project's objective was to perform a funnel analysis on Metrocar's customer journey to identify drop-off points and recommend improvement strategies. Funnel analysis reveals where users exit the funnel, helping to improve desired outcomes such as sales and conversions.
+## Metrocar's Funnel:
+Metrocar operates as a ride-sharing intermediary, linking riders with drivers via a user-friendly mobile application. The customer funnel encompasses stages such as app download, signup, ride request, driver acceptance, ride completion, payment, and review. Drop-offs at each stage are analyzed to identify opportunities for optimization.
+## Ad-Hoc Analysis:
 
-#### Total app downloadeds:
+#### Total app downloads:
+How many times has the Metrocar app been downloaded?
 ```sql
 SELECT count(*) AS total_downloads
 FROM app_downloads;
@@ -11,6 +20,7 @@ FROM app_downloads;
 | 23608           |
 
 #### Total users signed up on the app:
+How many users who have signed up on the app?
 ```sql
 SELECT COUNT(user_id) AS total_signups
 FROM signups;
@@ -20,6 +30,7 @@ FROM signups;
 | 17623         |
 
 #### Total rides requested through the app:
+How many rides have been requested through the app?
 ```SQL
 SELECT COUNT(request_ts) AS total_ride_requests
 FROM ride_requests;
@@ -29,6 +40,7 @@ FROM ride_requests;
 | 385477              |
 
 #### Total rides requested and completed through the app:
+How many rides have been requested and completed through the app?
 ````sql
 SELECT
   COUNT(request_ts) AS total_ride_requests,
