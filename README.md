@@ -494,6 +494,41 @@ ORDER BY
 | 5           | payment_completed | 6233  | 0.26402067095899695 | 1                  |
 | 6           | review_completed  | 4348  | 0.18417485598102337 | 0.6975774105567143 |
 
+## Conclusions and Recommendations:
+
+#### The funnel displayed in table form above represents user behavior and highlights areas of drop-off at each stage. Here are some insights:  
+
+###   
+1. **High signup conversion rate**  
+   There is high download to signup conversion rate (74.7%). Users are engaging well after downloading.  
+
+2. **Significant Drop-off**  
+   From signups to ride requests, there's a 29.6% drop. This could indicate challenges in onboarding or a lack of incentive to request a ride.  
+
+3. **Minimal Loss in Ride Fulfillment**  
+   The drop-off from ride requested to ride accepted is very low (~1%). Operational efficiency seems solid here.  
+
+4. **Sharp Decline in Ride Completion**  
+   Only 50.8% of users who requested rides complete them. This could be due to cancellations, availability issues, or changes in user decisions.  
+
+5. **Payment Completion is Consistent**  
+   No further loss from ride completion to payment completion. Users completing rides are reliable payers.  
+
+6. **Low Review Engagement**  
+   Only 69.7% of users who completed payments leave reviews. Engaging users to provide feedback is a challenge.  
+
+### Suggestions  
+1. **Focus on Signups to Ride Requests**  
+   Simplify the process, offer incentives, or improve UX to reduce friction at this stage.  
+
+2. **Analyze Ride Completion Drop-offs**  
+   Study why users cancel or abandon rides (e.g., pricing, delays, availability). Address operational inefficiencies or offer ride guarantees.  
+
+3. **Boost Review Completion**  
+   Encourage reviews with incentives (e.g., discounts, points) or make it easier to leave feedback.  
+
+
+
 #### The following queries are to pull aggregated data from the database for further analysis for example creating dashboards. The output is mostly too large to display. 
 #### The first query each funnel step by platform, user age range and download date of app. Output too large to display (26901 rows).
 
