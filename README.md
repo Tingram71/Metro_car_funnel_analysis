@@ -506,7 +506,7 @@ ORDER BY
    From signups to ride requests, there's a 29.6% drop. This could indicate challenges in onboarding or a lack of incentive to request a ride.  
 
 3. **Minimal Loss in Ride Fulfillment**  
-   The drop-off from ride requested to ride accepted is very low (~1%). Operational efficiency seems solid here.  
+   The drop-off from ride requested to ride accepted is very low (1%). Operational efficiency seems solid here.  
 
 4. **Sharp Decline in Ride Completion**  
    Only 50.8% of users who requested rides complete them. This could be due to cancellations, availability issues, or changes in user decisions.  
