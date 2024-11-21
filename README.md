@@ -494,7 +494,8 @@ ORDER BY
 | 5           | payment_completed | 6233  | 0.26402067095899695 | 1                  |
 | 6           | review_completed  | 4348  | 0.18417485598102337 | 0.6975774105567143 |
 
-#### To pull aggregated data for each funnel step by platform, user age range and download date of app:
+#### The following queries are to pull aggregated data from the database for further analysis for example creating dashboards. The output is mostly too large to display. 
+#### The first query each funnel step by platform, user age range and download date of app. Output too large to display (26901 rows).
 
 ````sql
 WITH
@@ -774,7 +775,32 @@ FROM
 ORDER BY
   funnel_step;
 ````
-#### Count of users and rides for 'ride request' step of the funnel grouped by hour of request, month and day:
+| funnel_step | funnel_name       | platform      | value | previous_value      | top_value           |
+| ----------- | ----------------- | ------------- | ----- | ------------------- | ------------------- |
+| 0           | downloads         | web           | 2383  | null                | 1                   |
+| 0           | downloads         | android       | 6935  | 2.9101972303818715  | 2.9101972303818715  |
+| 0           | downloads         | ios           | 14290 | 2.06056236481615    | 5.996642887117079   |
+| 1           | signups           | ios           | 10728 | 0.7507347795661301  | 4.501888375996643   |
+| 1           | signups           | android       | 5148  | 0.4798657718120805  | 2.160302140159463   |
+| 1           | signups           | web           | 1747  | 0.33935508935508935 | 0.7331095258078053  |
+| 2           | ride_requested    | web           | 1237  | 0.7080709788208357  | 0.5190935795216114  |
+| 2           | ride_requested    | android       | 3619  | 2.925626515763945   | 1.5186739404112464  |
+| 2           | ride_requested    | ios           | 7550  | 2.0862116606797456  | 3.1682752832563996  |
+| 3           | ios               | ride_accepted | 7471  | 0.9895364238410596  | 3.1351237935375575  |
+| 3           | android           | ride_accepted | 3580  | 0.47918618658814083 | 1.502308015107008   |
+| 3           | web               | ride_accepted | 1227  | 0.3427374301675978  | 0.5148971884179605  |
+| 4           | ride_completed    | web           | 611   | 0.4979625101874491  | 0.2563994964330676  |
+| 4           | ride_completed    | android       | 1830  | 2.9950900163666123  | 0.7679395719681075  |
+| 4           | ride_completed    | ios           | 3792  | 2.0721311475409836  | 1.5912715065044063  |
+| 5           | payment_completed | web           | 611   | 0.16112869198312235 | 0.2563994964330676  |
+| 5           | payment_completed | android       | 1830  | 2.9950900163666123  | 0.7679395719681075  |
+| 5           | payment_completed | ios           | 3792  | 2.0721311475409836  | 1.5912715065044063  |
+| 6           | review_completed  | web           | 424   | 0.11181434599156118 | 0.17792698279479646 |
+| 6           | review_completed  | ios           | 2651  | 6.252358490566038   | 1.112463281577843   |
+| 6           | review_completed  | android       | 1273  | 0.48019615239532254 | 0.5342005874947545  |
+
+````
+#### Count of users and rides for 'ride request' step of the funnel grouped by hour of request, month and day. Output too large to display (8655 rows). 
 
 ````sql
 WITH
@@ -823,7 +849,7 @@ FROM
 ORDER BY
   step;
 ````
-#### Count of users and rides for each funnel step grouped by platform, age range and trip duration:
+#### Count of users and rides for each funnel step grouped by platform, age range and trip duration: Output too large to display (8043 rows). 
 
 ````sql
 WITH
@@ -1004,8 +1030,9 @@ FROM
   review
 ORDER BY
   step;
+ 
 ````
-#### User count and ride count for each funnel step grouped by platform, age range, download date and trip fare
+#### User count and ride count for each funnel step grouped by platform, age range, download date and trip fare. Output to large to dsiplay (41746 Rows).
 
 ````sql
 WITH
