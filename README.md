@@ -835,7 +835,7 @@ ORDER BY
 | 6           | review_completed  | android       | 1273  | 0.48019615239532254 | 0.5342005874947545  |
 
 ````
-#### Count of users and rides for 'ride request' step of the funnel grouped by hour of request, month and day. Output too large to display (8655 rows). 
+#### **Count of users and rides for 'ride request' step of the funnel grouped by hour of request, month and day. Output too large to display (8655 rows).** 
 
 ````sql
 WITH
